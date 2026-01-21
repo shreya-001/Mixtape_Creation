@@ -21,3 +21,4 @@ pillow
 requests
 aiofiles
 ipykernel
+matplotlib
