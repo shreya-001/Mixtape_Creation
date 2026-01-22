@@ -7,7 +7,6 @@ pydub
 ffmpeg-python
 mutagen
 pillow
-pyaudioop; python_version >= "3.13"
 
 # Backend
 fastapi
