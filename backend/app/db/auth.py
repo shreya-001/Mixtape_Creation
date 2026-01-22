@@ -134,26 +134,42 @@ class SQLiteAuthStore:
         """
         email_l = email.lower()
         with self._conn() as conn:
-            row = conn.execute(
-                "SELECT code_hash, salt, expires_at FROM login_codes WHERE email = ?",
-                (email_l,),
-            ).fetchone()
+            # Consume (delete) the code row atomically to prevent TOCTOU races where
+            # two concurrent callers can both SELECT the same row before either DELETEs it.
+            #
+            # Preferred: SQLite >= 3.35 supports RETURNING, letting us delete and fetch
+            # the row in one statement. Fallback: take an IMMEDIATE transaction so the
+            # SELECT+DELETE happens under a write lock.
+            try:
+                row = conn.execute(
+                    "DELETE FROM login_codes WHERE email = ? RETURNING code_hash, salt, expires_at",
+                    (email_l,),
+                ).fetchone()
+                conn.commit()
+            except sqlite3.OperationalError as e:
+                if "returning" not in str(e).lower():
+                    raise
+                conn.execute("BEGIN IMMEDIATE")
+                row = conn.execute(
+                    "SELECT code_hash, salt, expires_at FROM login_codes WHERE email = ?",
+                    (email_l,),
+                ).fetchone()
+                if row is None:
+                    conn.rollback()
+                    return False
+                conn.execute("DELETE FROM login_codes WHERE email = ?", (email_l,))
+                conn.commit()
+
             if row is None:
                 return False
 
             expires_at = datetime.fromisoformat(str(row["expires_at"]))
             salt = str(row["salt"])
             expected = str(row["code_hash"])
-            is_valid = (
+            return (
                 expires_at >= datetime.now(timezone.utc)
                 and hash_code(email, code, salt) == expected
             )
-
-            # Invalidate the code regardless of whether it was valid,
-            # to ensure one-time use semantics.
-            conn.execute("DELETE FROM login_codes WHERE email = ?", (email_l,))
-            conn.commit()
-            return is_valid
 
     def create_oauth_state(self, state: str, user_id: str, ttl_seconds: int = 600) -> None:
         now = _now_iso()
