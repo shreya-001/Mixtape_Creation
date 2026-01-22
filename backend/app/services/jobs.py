@@ -103,6 +103,14 @@ def run_job(job_id: str, store: SQLiteJobStore, storage: LocalArtifactStorage) -
             title, artist, dur_s = read_tags_and_duration(str(p))
             tracks.append(TrackInfo(filename=p.name, title=title, artist=artist, duration_s=dur_s, path=str(p)))
 
+        # Preflight: pydub + video rendering require ffmpeg tooling on PATH.
+        # (On some hosts, ffmpeg/ffprobe are not installed by default.)
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            raise RuntimeError(
+                "Missing ffmpeg/ffprobe on server PATH. This host cannot run mixing/video rendering. "
+                "Run locally or deploy using Docker with ffmpeg installed."
+            )
+
         update(stage="mix", progress=25)
         _log(jp.log_path, "[mix] starting")
         mix_path = jp.outputs_dir / "mix.mp3"
