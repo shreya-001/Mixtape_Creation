@@ -31,6 +31,10 @@ def _cors_allow_origins() -> list[str]:
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name)
 
+    @app.get("/")
+    def root() -> dict:
+        return {"ok": True, "docs": "/docs", "health": "/healthz"}
+
     @app.get("/healthz")
     def healthz() -> dict:
         return {"ok": True}
