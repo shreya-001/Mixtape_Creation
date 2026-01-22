@@ -1,1 +1,32 @@
--r requirements-prod.txt
+# Single requirements file (local run).
+#
+# Install:
+#   pip install -r requirements.txt
+
+# Audio / media
+pydub
+ffmpeg-python
+mutagen
+pillow
+
+# Backend
+fastapi
+uvicorn[standard]
+python-multipart
+aiofiles
+requests
+PyJWT
+cryptography
+
+# Frontend
+streamlit>=1.42.0
+Authlib>=1.3.2
+
+# YouTube upload / Google OAuth
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+
+email-validator
+pydantic[email]

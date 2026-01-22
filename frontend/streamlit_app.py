@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import os
 import time
-import json
 from typing import Any, Dict, List
 
 import requests
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 def _get_api_base() -> str:
@@ -54,18 +52,13 @@ st.set_page_config(page_title="Mixtape Automation", layout="wide")
 st.title("Mixtape Automation")
 st.caption("Create seamless mixtapes, optionally render a video, and upload to YouTube.")
 
-# If redirected back from Google login or AI image upload with query params,
-# capture values into session state.
+# If redirected back from Google login with query params, capture values into session state.
 def _consume_token_from_query() -> None:
     token: str | None = None
-    bg_upload_id: str | None = None
-    bg_filename: str | None = None
 
     try:
         qp = st.query_params  # type: ignore[attr-defined]
         token = qp.get("token")
-        bg_upload_id = qp.get("bg_upload_id")
-        bg_filename = qp.get("bg_filename")
     except Exception:
         qp = st.experimental_get_query_params()
 
@@ -74,19 +67,12 @@ def _consume_token_from_query() -> None:
             return vals[0] if vals else None
 
         token = _first("token")
-        bg_upload_id = _first("bg_upload_id")
-        bg_filename = _first("bg_filename")
 
     if token and not st.session_state.get("auth_token"):
         st.session_state["auth_token"] = token
 
-    if bg_upload_id and bg_filename:
-        upload_state = st.session_state.setdefault("uploads", {})
-        upload_state["bg_image_upload_id"] = bg_upload_id
-        upload_state["bg_filename"] = bg_filename
-
     # Clear query parameters after consuming any supported values.
-    if any([token, bg_upload_id, bg_filename]):
+    if token:
         try:
             st.query_params.clear()  # type: ignore[attr-defined]
         except Exception:
@@ -181,135 +167,34 @@ with col1:
     )
 
     st.subheader("Background image")
-    st.caption("Use AI to generate artwork, or upload your own image.")
+    st.caption("Upload an image to use as the video background.")
 
-    ai_tab, upload_tab = st.tabs(["Generate with AI", "Upload image"])
-
-    # Limit AI generations per session to avoid accidental overuse.
-    MAX_AI_IMAGE_TRIES = 5
-    ai_state = st.session_state.setdefault("ai_image", {"tries": 0})
-
-    with ai_tab:
-        st.markdown("**Experimental:** AI-generated artwork is powered by a third-party service and may be rate limited. You can always switch to the **Upload image** tab.")
-        prompt = st.text_input(
-            "Describe the artwork you want",
-            placeholder="e.g. Neon city skyline with DJ silhouette",
-            key="ai_prompt",
-        )
-        remaining = max(0, MAX_AI_IMAGE_TRIES - int(ai_state.get("tries", 0)))
-        st.caption(f"You can generate up to {MAX_AI_IMAGE_TRIES} images per session. Remaining: {remaining}.")
-
-        generate_disabled = remaining <= 0 or not prompt
-        if st.button("Generate and use as background", disabled=generate_disabled):
-            ai_state["tries"] = int(ai_state.get("tries", 0)) + 1
-            api_base_js = json.dumps(API_BASE)
-            auth_token = st.session_state.get("auth_token") or ""
-            auth_js = json.dumps(auth_token)
-            prompt_js = json.dumps(prompt)
-            html = f"""
-            <div id="ai-image-container">
-              <p>Generating image and uploading to backend...</p>
-            </div>
-            <script src="https://js.puter.com/v2/"></script>
-            <script>
-              (function() {{
-                const container = document.getElementById("ai-image-container");
-                const API_BASE = {api_base_js};
-                const AUTH_TOKEN = {auth_js};
-                const prompt = {prompt_js};
-
-                if (!AUTH_TOKEN) {{
-                  container.innerHTML = "<p style='color:red;'>You must be logged in before generating artwork.</p>";
-                  return;
-                }}
-
-                container.innerHTML = "<p>Generating image for: <em>" + prompt + "</em></p>";
-                puter.ai.txt2img(prompt, {{
-                  // Use a free-tier image model for testing.
-                  model: "black-forest-labs/FLUX.1-schnell-Free"
-                }}).then(function(img) {{
-                  // Draw image to a canvas so we can turn it into a Blob.
-                  const canvas = document.createElement("canvas");
-                  const w = img.naturalWidth || img.width;
-                  const h = img.naturalHeight || img.height;
-                  canvas.width = w;
-                  canvas.height = h;
-                  const ctx = canvas.getContext("2d");
-                  ctx.drawImage(img, 0, 0, w, h);
-                  canvas.toBlob(async function(blob) {{
-                    if (!blob) {{
-                      container.innerHTML = "<p style='color:red;'>Could not prepare image for upload.</p>";
-                      return;
-                    }}
-                    try {{
-                      const form = new FormData();
-                      form.append("file", blob, "ai_background.png");
-                      const resp = await fetch(API_BASE + "/uploads/image", {{
-                        method: "POST",
-                        headers: {{
-                          "Authorization": "Bearer " + AUTH_TOKEN
-                        }},
-                        body: form
-                      }});
-                      if (!resp.ok) {{
-                        const text = await resp.text();
-                        console.error("Upload failed", text);
-                        container.innerHTML = "<p style='color:red;'>Upload to backend failed. Please try again.</p>";
-                        return;
-                      }}
-                      const data = await resp.json();
-                      // Redirect back to Streamlit with bg upload info in query params
-                      const url = new URL(window.location.href);
-                      url.searchParams.set("bg_upload_id", data.upload_id);
-                      url.searchParams.set("bg_filename", data.filename);
-                      window.location.href = url.toString();
-                    }} catch (err) {{
-                      console.error(err);
-                      container.innerHTML = "<p style='color:red;'>Upload to backend failed. Please try again.</p>";
-                    }}
-                  }}, "image/png");
-                }}).catch(function(err) {{
-                  console.error(err);
-                  var msg = (err && err.message) ? err.message : String(err || "unknown error");
-                  container.innerHTML = "<p style='color:red;'>Image generation failed: " + msg + "</p>";
-                }});
-              }})();
-            </script>
-            """
-            components.html(html, height=500)
-
-        if remaining <= 0:
-            st.warning("You've reached the image generation limit for this session.")
-
-    with upload_tab:
-        bg = st.file_uploader(
-            "Upload background image",
-            accept_multiple_files=False,
-            type=["png", "jpg", "jpeg", "webp"],
-            help="This image will be used as the video background.",
-        )
+    bg = st.file_uploader(
+        "Upload background image",
+        accept_multiple_files=False,
+        type=["png", "jpg", "jpeg", "webp"],
+        help="This image will be used as the video background.",
+    )
 
     upload_state = st.session_state.setdefault("uploads", {})
 
     if st.button(
         "Upload to backend",
-        disabled=not tracks or not (bg or upload_state.get("bg_image_upload_id")),
+        disabled=not tracks or not bg,
     ):
         with st.spinner("Uploading tracks..."):
             files = [("files", (t.name, t.getvalue(), t.type or "application/octet-stream")) for t in tracks]
             tr = api_post_files("/uploads/tracks", files)
 
-        # If a new image was uploaded here, send it; otherwise keep the one from AI.
-        if bg is not None:
-            with st.spinner("Uploading background image..."):
-                img_files = [("file", (bg.name, bg.getvalue(), bg.type or "application/octet-stream"))]
-                im = api_post_files("/uploads/image", img_files)
-                upload_state["bg_image_upload_id"] = im["upload_id"]
-                upload_state["bg_filename"] = im["filename"]
+        with st.spinner("Uploading background image..."):
+            img_files = [("file", (bg.name, bg.getvalue(), bg.type or "application/octet-stream"))]
+            im = api_post_files("/uploads/image", img_files)
+            upload_state["bg_image_upload_id"] = im["upload_id"]
+            upload_state["bg_filename"] = im["filename"]
 
-            upload_state["tracks_upload_id"] = tr["upload_id"]
-            upload_state["tracks_files"] = tr["files"]
-            st.success("Uploaded!")
+        upload_state["tracks_upload_id"] = tr["upload_id"]
+        upload_state["tracks_files"] = tr["files"]
+        st.success("Uploaded!")
 
     if upload_state:
         st.success("Files uploaded to backend.")
@@ -377,10 +262,6 @@ with col2:
             st.error("The job failed.")
             with st.expander("Show error details", expanded=True):
                 st.code(str(error))
-                st.caption(
-                    "Tip: On hosted platforms, audio/video processing often requires the `ffmpeg` binary. "
-                    "If the error mentions ffmpeg/ffprobe, deploy with ffmpeg available (e.g. Docker) or run locally."
-                )
 
         artifacts = job_state.get("artifacts") or {}
         st.subheader("Downloads")

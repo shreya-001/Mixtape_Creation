@@ -5,7 +5,6 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-import shutil
 from typing import Tuple
 
 from PIL import Image
@@ -29,8 +28,6 @@ def make_video_from_audio(
     Requires ffmpeg installed and available on PATH.
     Mirrors the notebook approach but uses a temp resized image.
     """
-    if not shutil.which("ffmpeg"):
-        raise RuntimeError("ffmpeg is not installed on this server (required for video rendering).")
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Image file not found: {image_path}")
     if not os.path.exists(audio_path):
