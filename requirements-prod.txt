@@ -1,0 +1,33 @@
+# Runtime dependencies for deployment (FastAPI + Streamlit).
+#
+# Install dev/notebook deps with: pip install -r requirements-dev.txt
+
+# Audio / media
+pydub
+ffmpeg-python
+mutagen
+pillow
+
+# Backend
+fastapi
+uvicorn[standard]
+python-multipart
+aiofiles
+requests
+PyJWT
+cryptography
+
+# Frontend
+streamlit>=1.42.0
+Authlib>=1.3.2
+
+# YouTube upload / Google OAuth
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+
+email-validator
+pydantic[email]
+
+

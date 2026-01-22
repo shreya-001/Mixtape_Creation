@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,17 +13,33 @@ from .api.auth import router as auth_router
 from .core.config import settings
 
 
+def _cors_allow_origins() -> list[str]:
+    """CORS origins for browser-based clients (e.g. Streamlit).
+
+    Configure with `CORS_ALLOW_ORIGINS` as a comma-separated list.
+    Defaults to local dev Streamlit origins.
+    """
+    env = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+    if env:
+        return [o.strip().rstrip("/") for o in env.split(",") if o.strip()]
+    return [
+        "http://localhost:8501",
+        "http://127.0.0.1:8501",
+    ]
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.app_name)
 
+    @app.get("/healthz")
+    def healthz() -> dict:
+        return {"ok": True}
+
     # Allow the local Streamlit frontend to talk directly to this API from the browser.
-    # This is restricted to localhost origins used during development.
+    # In production set CORS_ALLOW_ORIGINS to your Streamlit URL(s).
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:8501",
-            "http://127.0.0.1:8501",
-        ],
+        allow_origins=_cors_allow_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
