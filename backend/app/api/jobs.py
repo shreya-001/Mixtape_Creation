@@ -69,8 +69,11 @@ def get_job(job_id: str, request: Request, user=Depends(get_current_user)) -> Jo
     except KeyError:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # Enforce ownership
-    if getattr(rec, "user_id", None) and rec.user_id != user.user_id:
+    owner_user_id = rec.owner_user_id()
+    if not owner_user_id:
+        # Legacy / malformed rows (e.g., pre-migration) must not be accessible cross-user.
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if owner_user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     meta = json.loads(rec.meta_json)
@@ -83,7 +86,7 @@ def get_job(job_id: str, request: Request, user=Depends(get_current_user)) -> Jo
         progress=rec.progress,
         stage=rec.stage,
         error=rec.error,
-        artifacts=_artifact_links(request, user.user_id, job_id),
+        artifacts=_artifact_links(request, owner_user_id, job_id),
         youtube_video_id=youtube_video_id,
         youtube_url=youtube_url,
     )

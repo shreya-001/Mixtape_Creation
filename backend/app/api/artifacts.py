@@ -22,10 +22,14 @@ def download_artifact(job_id: str, name: str, user=Depends(get_current_user)):
         rec = store.get_job(job_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Job not found")
-    if getattr(rec, "user_id", None) and rec.user_id != user.user_id:
+    owner_user_id = rec.owner_user_id()
+    if not owner_user_id:
+        # Legacy / malformed rows (e.g., pre-migration) must not be accessible cross-user.
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if owner_user_id != user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    jp = storage.job_paths(user.user_id, job_id)
+    jp = storage.job_paths(owner_user_id, job_id)
     safe = storage.safe_filename(name)
     path = jp.outputs_dir / safe
     if not path.exists():

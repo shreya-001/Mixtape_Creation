@@ -5,10 +5,31 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+def _default_storage_root() -> Path:
+    """Default local storage root.
+
+    Prefer `MIXTAPE_STORAGE_ROOT` when set. Otherwise, default to a `storage/`
+    folder at the project root (derived from this file's location) so the app
+    doesn't depend on a developer-specific absolute path.
+    """
+    env = os.getenv("MIXTAPE_STORAGE_ROOT")
+    if env:
+        return Path(env).expanduser()
+
+    # This file is: backend/app/core/config.py
+    # Project root is: ../../.. (parents[3])
+    try:
+        project_root = Path(__file__).resolve().parents[3]
+        return project_root / "storage"
+    except Exception:
+        # Last-resort fallback: current working directory.
+        return Path.cwd() / "storage"
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str = "mixtape-automation"
-    storage_root: Path = Path(os.getenv("MIXTAPE_STORAGE_ROOT", "/Users/shreyanair/Mixtape_Creation/storage"))
+    storage_root: Path = _default_storage_root()
 
     # Auth
     jwt_secret: str = os.getenv("JWT_SECRET", "dev-secret-change-me")
