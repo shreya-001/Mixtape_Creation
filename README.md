@@ -16,6 +16,7 @@ You can also connect a YouTube account and upload the final video (optional).
 
 ![Architecture diagram](docs/architecture.svg)
 
+
 ## Data flow (what happens when you click “Start mixing job”)
 
 - **Upload**
@@ -136,6 +137,18 @@ export TOKENS_ENCRYPTION_KEY="(optional unless using YouTube) - see below"
 # Storage location
 # - This project stores DB + uploads + artifacts under `./storage/` by default.
 # - If you want a different location, edit `backend/app/core/config.py` (`_default_storage_root()`).
+```
+
+#### Generating `JWT_SECRET`
+
+You generate this locally (it’s just a long random string). For example:
+
+```bash
+# Option 1 (Python)
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+
+# Option 2 (OpenSSL)
+openssl rand -hex 32
 ```
 
 #### Generating `TOKENS_ENCRYPTION_KEY` (only if using YouTube OAuth)
