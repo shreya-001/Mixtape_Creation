@@ -1,30 +1,35 @@
 # Mixtape Creation (FastAPI + Streamlit)
 
-Create seamless **crossfaded audio mixtapes**, render an **MP4 video** using an uploaded background image, and optionally **upload to YouTube**.
+This project takes a folder of tracks and turns it into a single **smooth, crossfaded mixtape**.
+You upload:
+- your audio files (mp3/wav/flac/etc)
+- one background image
+
+…and it outputs:
+- a mixed **MP3**
+- an **MP4** video (the image looped over the audio)
+- timestamps + description text
+
+You can also connect a YouTube account and upload the final video (optional).
 
 ## Architecture (high-level)
 
-> Note: Mermaid diagrams **won’t render in some views** (for example, certain diff views or non-GitHub markdown viewers).  
-> If you see a code block instead of a diagram, open the `README.md` file directly in GitHub (or use the “Preview” tab).
+![Architecture diagram](docs/architecture.svg)
 
-```mermaid
-flowchart LR
-  U[User] --> UI[Streamlit UI]
-  UI --> API[FastAPI API]
+If you’re viewing this somewhere that can’t load images, here’s the same idea in plain text:
 
-  API --> Uploads[Uploads]
-  API --> Jobs[Jobs]
-  API --> Artifacts[Artifacts]
-
-  Jobs --> Worker[Job runner]
-  Worker --> Mix[Mix MP3]
-  Worker --> Video[Render MP4]
-  Worker --> Store[storage/]
-  Artifacts --> Store
-
-  API --> Auth[Auth]
-  API --> YouTube[YouTube (optional)]
-  YouTube --> Google[Google/YouTube APIs]
+```text
+User (browser)
+   |
+   v
+Streamlit UI  --->  FastAPI API  --->  Job runner (background thread)
+                       |                    |
+                       |                    +--> Mix MP3 (pydub + ffmpeg)
+                       |                    +--> Render MP4 (ffmpeg)
+                       |
+                       +--> storage/ (SQLite + uploads + job artifacts)
+                       |
+                       +--> (optional) YouTube OAuth + upload
 ```
 
 ## Data flow (what happens when you click “Start mixing job”)
@@ -81,11 +86,11 @@ Mixing and video rendering can take time, so the API starts a job and returns im
 
 ## Run locally (end-to-end)
 
-## Quickstart (clone + run in a local folder)
+### Quickstart (clone + run in a local folder)
 
 ```bash
 # 1) Clone into a local folder
-git clone <YOUR_REPO_URL_HERE>
+git clone <paste-your-repo-url>
 cd Mixtape_Creation
 
 # 2) Create & activate a virtualenv
