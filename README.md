@@ -4,30 +4,27 @@ Create seamless **crossfaded audio mixtapes**, optionally render an **MP4 video*
 
 ## Architecture (high-level)
 
+> Note: Mermaid diagrams **won’t render in some views** (for example, certain diff views or non-GitHub markdown viewers).  
+> If you see a code block instead of a diagram, open the `README.md` file directly in GitHub (or use the “Preview” tab).
+
 ```mermaid
 flowchart LR
-  U[User / Browser] -->|uses| S[Streamlit UI<br/>frontend/streamlit_app.py]
-  S -->|HTTP (JWT)| API[FastAPI API<br/>backend/app/main.py]
+  U["User"] --> UI["Streamlit UI"]
+  UI -->|HTTP (JWT)| API["FastAPI API"]
 
-  API --> UP[Uploads API<br/>/uploads/tracks<br/>/uploads/image]
-  API --> JOBS[Jobs API<br/>/jobs]
-  API --> ART[Artifacts API<br/>/jobs/{id}/artifacts/*]
-  API --> AUTH[Auth API<br/>/auth/*]
-  API --> YT[YouTube API<br/>/youtube/*]
+  API --> Uploads["Uploads\n(tracks + image)"]
+  API --> Jobs["Jobs\n(start + status)"]
+  API --> Artifacts["Artifacts\n(download)"]
 
-  JOBS -->|spawns thread| WORKER[Job runner<br/>backend/app/services/jobs.py]
-  WORKER --> MIX[Audio mixing<br/>pydub + ffmpeg]
-  WORKER --> VID[Video render<br/>ffmpeg]
-  WORKER --> DESC[Description/timestamps<br/>services/description.py + services/timestamps.py]
-  WORKER --> STORE[(Local storage<br/>storage/)]
-  ART --> STORE
+  Jobs --> Worker["Background job thread"]
+  Worker --> Mix["Mix MP3\n(pydub + ffmpeg)"]
+  Worker --> Video["MP4 render\n(ffmpeg)"]
+  Worker --> Store["storage/\n(files + SQLite)"]
+  Artifacts --> Store
 
-  AUTH --> DB1[(SQLite: auth.sqlite3)]
-  JOBS --> DB2[(SQLite: jobs.sqlite3)]
-  DB1 --> STORE
-  DB2 --> STORE
-
-  YT -->|OAuth + upload| G[Google/YouTube APIs]
+  API --> Auth["Auth (JWT + Google OAuth)"]
+  API --> YouTube["YouTube upload (optional)"]
+  YouTube --> Google["Google/YouTube APIs"]
 ```
 
 ## Data flow (what happens when you click “Start mixing job”)
@@ -84,6 +81,37 @@ Mixing and video rendering can take time, so the API starts a job and returns im
 
 ## Run locally (end-to-end)
 
+## Quickstart (clone + run in a local folder)
+
+```bash
+# 1) Clone into a local folder
+git clone <YOUR_REPO_URL_HERE>
+cd Mixtape_Creation
+
+# 2) Create & activate a virtualenv
+python -m venv .venv
+source .venv/bin/activate
+
+# 3) Install Python deps
+pip install -r requirements.txt
+
+# 4) Install ffmpeg (required for mixing + video)
+# macOS (Homebrew):
+#   brew install ffmpeg
+# Ubuntu/Debian:
+#   sudo apt-get update && sudo apt-get install -y ffmpeg
+
+# 5) Configure env vars (minimum)
+export API_BASE="http://127.0.0.1:8000"
+export JWT_SECRET="change-me-to-a-long-random-string"
+
+# 6) Run backend (Terminal 1)
+uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+
+# 7) Run frontend (Terminal 2)
+streamlit run frontend/streamlit_app.py
+```
+
 ### Prerequisites
 
 - Python 3.11+ (3.12 recommended)
@@ -116,8 +144,9 @@ export JWT_SECRET="change-me-to-a-long-random-string"
 # required if you use YouTube OAuth (encrypts stored OAuth tokens)
 export TOKENS_ENCRYPTION_KEY="(optional unless using YouTube) - see below"
 
-# where to store SQLite + uploads + artifacts (defaults to ./storage)
-# export STORAGE_ROOT="./storage"
+# Storage location
+# - This project stores DB + uploads + artifacts under `./storage/` by default.
+# - If you want a different location, edit `backend/app/core/config.py` (`_default_storage_root()`).
 ```
 
 #### Generating `TOKENS_ENCRYPTION_KEY` (only if using YouTube OAuth)
