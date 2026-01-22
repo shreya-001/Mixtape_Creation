@@ -374,7 +374,13 @@ with col2:
         st.progress(min(max(progress, 0), 100) / 100.0)
 
         if error:
-            st.error("The job failed. Please try again or adjust your inputs.")
+            st.error("The job failed.")
+            with st.expander("Show error details", expanded=True):
+                st.code(str(error))
+                st.caption(
+                    "Tip: On hosted platforms, audio/video processing often requires the `ffmpeg` binary. "
+                    "If the error mentions ffmpeg/ffprobe, deploy with ffmpeg available (e.g. Docker) or run locally."
+                )
 
         artifacts = job_state.get("artifacts") or {}
         st.subheader("Downloads")
