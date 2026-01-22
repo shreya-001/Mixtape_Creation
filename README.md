@@ -1,6 +1,6 @@
 # Mixtape Creation (FastAPI + Streamlit)
 
-Create seamless **crossfaded audio mixtapes**, optionally render an **MP4 video** using an uploaded background image, and optionally **upload to YouTube**.
+Create seamless **crossfaded audio mixtapes**, render an **MP4 video** using an uploaded background image, and optionally **upload to YouTube**.
 
 ## Architecture (high-level)
 
@@ -9,22 +9,22 @@ Create seamless **crossfaded audio mixtapes**, optionally render an **MP4 video*
 
 ```mermaid
 flowchart LR
-  U["User"] --> UI["Streamlit UI"]
-  UI -->|HTTP (JWT)| API["FastAPI API"]
+  U[User] --> UI[Streamlit UI]
+  UI --> API[FastAPI API]
 
-  API --> Uploads["Uploads\n(tracks + image)"]
-  API --> Jobs["Jobs\n(start + status)"]
-  API --> Artifacts["Artifacts\n(download)"]
+  API --> Uploads[Uploads]
+  API --> Jobs[Jobs]
+  API --> Artifacts[Artifacts]
 
-  Jobs --> Worker["Background job thread"]
-  Worker --> Mix["Mix MP3\n(pydub + ffmpeg)"]
-  Worker --> Video["MP4 render\n(ffmpeg)"]
-  Worker --> Store["storage/\n(files + SQLite)"]
+  Jobs --> Worker[Job runner]
+  Worker --> Mix[Mix MP3]
+  Worker --> Video[Render MP4]
+  Worker --> Store[storage/]
   Artifacts --> Store
 
-  API --> Auth["Auth (JWT + Google OAuth)"]
-  API --> YouTube["YouTube upload (optional)"]
-  YouTube --> Google["Google/YouTube APIs"]
+  API --> Auth[Auth]
+  API --> YouTube[YouTube (optional)]
+  YouTube --> Google[Google/YouTube APIs]
 ```
 
 ## Data flow (what happens when you click “Start mixing job”)
