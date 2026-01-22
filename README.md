@@ -23,7 +23,7 @@ You can also connect a YouTube account and upload the final video (optional).
   </a>
 </div>
 
-- [**YouTube demo**:] (https://youtu.be/9swCqJpl934)
+- ![**YouTube demo**:] (https://youtu.be/9swCqJpl934)
 
 ## Architecture (high-level)
 
