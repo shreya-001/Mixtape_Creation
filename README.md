@@ -12,6 +12,19 @@ You upload:
 
 You can also connect a YouTube account and upload the final video (optional).
 
+## Demo videos
+
+<div>
+  <a href="https://www.loom.com/share/1d29266dcb564229ae2864686ea1514c">
+    <p>Loom walkthrough (watch video)</p>
+  </a>
+  <a href="https://www.loom.com/share/1d29266dcb564229ae2864686ea1514c">
+    <img width="300" src="https://cdn.loom.com/sessions/thumbnails/1d29266dcb564229ae2864686ea1514c-c8e343f287b8a000-full-play.gif#t=0.1" alt="Loom demo preview">
+  </a>
+</div>
+
+- **YouTube demo**: `https://youtu.be/9swCqJpl934`
+
 ## Architecture (high-level)
 
 ![Architecture diagram](docs/architecture.svg)
