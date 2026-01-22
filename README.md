@@ -16,22 +16,6 @@ You can also connect a YouTube account and upload the final video (optional).
 
 ![Architecture diagram](docs/architecture.svg)
 
-If you’re viewing this somewhere that can’t load images, here’s the same idea in plain text:
-
-```text
-User (browser)
-   |
-   v
-Streamlit UI  --->  FastAPI API  --->  Job runner (background thread)
-                       |                    |
-                       |                    +--> Mix MP3 (pydub + ffmpeg)
-                       |                    +--> Render MP4 (ffmpeg)
-                       |
-                       +--> storage/ (SQLite + uploads + job artifacts)
-                       |
-                       +--> (optional) YouTube OAuth + upload
-```
-
 ## Data flow (what happens when you click “Start mixing job”)
 
 - **Upload**
