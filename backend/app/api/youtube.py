@@ -77,6 +77,10 @@ def youtube_me(user=Depends(get_current_user)):
     if not token_enc:
         raise HTTPException(status_code=404, detail="YouTube not connected")
     token_json = decrypt_text(token_enc)
-    return get_my_channel(token_json)
+
+    def _persist(updated_token_json: str) -> None:
+        store.upsert_youtube_token(user.user_id, encrypt_text(updated_token_json))
+
+    return get_my_channel(token_json, on_token_json_updated=_persist)
 
 

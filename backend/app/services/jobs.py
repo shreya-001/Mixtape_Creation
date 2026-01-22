@@ -16,7 +16,7 @@ from .mixing import build_crossfaded_mixtape
 from .storage import LocalArtifactStorage
 from .timestamps import compute_track_timings, format_timestamp
 from ..db.auth import SQLiteAuthStore
-from ..core.security import decrypt_text
+from ..core.security import decrypt_text, encrypt_text
 from .youtube import upload_video_with_token_json
 from .video import VideoRenderOptions, make_video_from_audio
 
@@ -172,6 +172,9 @@ def run_job(job_id: str, store: SQLiteJobStore, storage: LocalArtifactStorage) -
                 raise RuntimeError("User has not connected YouTube yet.")
             token_json = decrypt_text(token_enc)
 
+            def _persist(updated_token_json: str) -> None:
+                auth_store.upsert_youtube_token(user_id, encrypt_text(updated_token_json))
+
             res = upload_video_with_token_json(
                 token_json=token_json,
                 video_path=video_path,
@@ -180,6 +183,7 @@ def run_job(job_id: str, store: SQLiteJobStore, storage: LocalArtifactStorage) -
                 tags=yt_tags,
                 privacy_status=yt_privacy,
                 thumbnail_path=(jp.outputs_dir / "thumbnail.jpg") if (jp.outputs_dir / "thumbnail.jpg").exists() else None,
+                on_token_json_updated=_persist,
             )
             _log(jp.log_path, f"[upload] video_id={res.video_id}")
             meta["youtube_video_id"] = res.video_id

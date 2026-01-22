@@ -4,7 +4,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -110,9 +110,13 @@ def _youtube_client(creds: Credentials):
     return build("youtube", "v3", credentials=creds)
 
 
-def get_my_channel(token_json: str) -> dict:
+def get_my_channel(
+    token_json: str,
+    *,
+    on_token_json_updated: Optional[Callable[[str], None]] = None,
+) -> dict:
     """Return basic info about the connected YouTube channel for this token."""
-    creds = credentials_from_token_json(token_json)
+    creds = credentials_from_token_json(token_json, on_token_json_updated=on_token_json_updated)
     if not creds or not creds.valid:
         raise RuntimeError("Invalid YouTube credentials")
     youtube = _youtube_client(creds)
@@ -127,11 +131,20 @@ def get_my_channel(token_json: str) -> dict:
     }
 
 
-def credentials_from_token_json(token_json: str) -> Credentials:
+def credentials_from_token_json(
+    token_json: str,
+    *,
+    on_token_json_updated: Optional[Callable[[str], None]] = None,
+) -> Credentials:
     data = json.loads(token_json)
     creds = Credentials.from_authorized_user_info(data, SCOPES)
     if creds and creds.expired and creds.refresh_token:
         creds.refresh(Request())
+        # Important: persist refreshed token state if the caller provides a hook.
+        # Without this, every subsequent API call after access_token expiry will
+        # redundantly refresh against Google (wasteful + rate-limit risk).
+        if on_token_json_updated is not None:
+            on_token_json_updated(creds.to_json())
     return creds
 
 
@@ -144,8 +157,9 @@ def upload_video_with_token_json(
     tags: Optional[List[str]] = None,
     privacy_status: str = "unlisted",
     thumbnail_path: Optional[Path] = None,
+    on_token_json_updated: Optional[Callable[[str], None]] = None,
 ) -> YouTubeUploadResult:
-    creds = credentials_from_token_json(token_json)
+    creds = credentials_from_token_json(token_json, on_token_json_updated=on_token_json_updated)
     if not creds or not creds.valid:
         raise RuntimeError("Invalid YouTube credentials")
     youtube = _youtube_client(creds)
