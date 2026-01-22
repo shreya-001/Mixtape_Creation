@@ -8,14 +8,9 @@ from pathlib import Path
 def _default_storage_root() -> Path:
     """Default local storage root.
 
-    Prefer `MIXTAPE_STORAGE_ROOT` when set. Otherwise, default to a `storage/`
-    folder at the project root (derived from this file's location) so the app
-    doesn't depend on a developer-specific absolute path.
+    Default to a `storage/` folder at the project root (derived from this file's
+    location) so the app doesn't depend on a developer-specific absolute path.
     """
-    env = os.getenv("MIXTAPE_STORAGE_ROOT")
-    if env:
-        return Path(env).expanduser()
-
     # This file is: backend/app/core/config.py
     # Project root is: ../../.. (parents[3])
     try:
