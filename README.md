@@ -22,8 +22,12 @@ You can also connect a YouTube account and upload the final video (optional).
     <img width="300" src="https://cdn.loom.com/sessions/thumbnails/1d29266dcb564229ae2864686ea1514c-c8e343f287b8a000-full-play.gif#t=0.1" alt="Loom demo preview">
   </a>
 </div>
+<div>
+  <a href="https://www.youtube.com/watch?v=9swCqJpl934&feature=youtu.be">
+    <p>Youtube Video Created by this Webapp</p>
+  </a>
+</div>
 
-- ![YouTube demo:]([https://youtu.be/9swCqJpl934](https://www.youtube.com/watch?v=9swCqJpl934&feature=youtu.be))
 
 ## Architecture (high-level)
 
