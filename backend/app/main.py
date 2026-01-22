@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,7 +38,7 @@ def create_app() -> FastAPI:
 
     @app.get("/healthz")
     def healthz() -> dict:
-        return {"ok": True}
+        return {"ok": True, "python": sys.version.split()[0]}
 
     # Allow the local Streamlit frontend to talk directly to this API from the browser.
     # In production set CORS_ALLOW_ORIGINS to your Streamlit URL(s).
