@@ -4,8 +4,6 @@ import os
 from dataclasses import dataclass
 from typing import Iterable, List, Optional
 
-from pydub import AudioSegment
-
 
 @dataclass(frozen=True)
 class MixResult:
@@ -31,6 +29,8 @@ def build_crossfaded_mixtape(
       transition = outro.overlay(intro)
       mixtape = mixtape[:-overlap] + transition + song[overlap:]
     """
+    from pydub import AudioSegment
+
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
     paths = [p for p in track_paths if p]
