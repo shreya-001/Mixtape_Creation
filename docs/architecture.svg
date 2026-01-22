@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="560" viewBox="0 0 1100 560">
+  <defs>
+    <style>
+      .box { fill: #0b1220; stroke: #4b5563; stroke-width: 2; rx: 12; }
+      .title { fill: #e5e7eb; font: 700 18px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+      .text { fill: #cbd5e1; font: 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+      .muted { fill: #94a3b8; font: 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+      .arrow { stroke: #60a5fa; stroke-width: 2.5; fill: none; marker-end: url(#arrowHead); }
+      .dash { stroke-dasharray: 6 6; }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1100" height="560" fill="#050914"/>
+
+  <!-- User -->
+  <rect class="box" x="40" y="60" width="210" height="90"/>
+  <text class="title" x="60" y="95">User</text>
+  <text class="text" x="60" y="120">Browser</text>
+
+  <!-- Streamlit -->
+  <rect class="box" x="300" y="45" width="270" height="120"/>
+  <text class="title" x="320" y="80">Streamlit UI</text>
+  <text class="muted" x="320" y="105">frontend/streamlit_app.py</text>
+  <text class="text" x="320" y="130">Upload tracks + image</text>
+  <text class="text" x="320" y="150">Start job, poll status</text>
+
+  <!-- FastAPI -->
+  <rect class="box" x="620" y="45" width="420" height="190"/>
+  <text class="title" x="640" y="80">FastAPI API</text>
+  <text class="muted" x="640" y="105">backend/app/main.py</text>
+  <text class="text" x="640" y="135">/uploads  /jobs  /jobs/:id/artifacts</text>
+  <text class="text" x="640" y="160">/auth (JWT + Google OAuth)</text>
+  <text class="text" x="640" y="185">/youtube (optional upload)</text>
+
+  <!-- Worker -->
+  <rect class="box" x="300" y="235" width="270" height="130"/>
+  <text class="title" x="320" y="270">Job runner</text>
+  <text class="muted" x="320" y="295">backend/app/services/jobs.py</text>
+  <text class="text" x="320" y="320">Mix MP3 (pydub + ffmpeg)</text>
+  <text class="text" x="320" y="342">Render MP4 (ffmpeg)</text>
+
+  <!-- Storage -->
+  <rect class="box" x="620" y="275" width="420" height="165"/>
+  <text class="title" x="640" y="310">Local storage</text>
+  <text class="text" x="640" y="335">storage/</text>
+  <text class="muted" x="640" y="360">SQLite: storage/db/auth.sqlite3</text>
+  <text class="muted" x="640" y="382">SQLite: storage/db/jobs.sqlite3</text>
+  <text class="text" x="640" y="410">Uploads + job artifacts</text>
+
+  <!-- Google -->
+  <rect class="box" x="620" y="460" width="420" height="75"/>
+  <text class="title" x="640" y="495">Google / YouTube APIs</text>
+  <text class="text" x="640" y="520">OAuth + optional upload</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 250 105 L 300 105" />
+  <path class="arrow" d="M 570 105 L 620 105" />
+
+  <path class="arrow" d="M 830 235 L 830 275" />
+  <path class="arrow" d="M 620 375 L 570 375 L 570 300 L 570 300 L 570 300 L 570 300" opacity="0"/>
+  <path class="arrow" d="M 620 105 L 435 105" opacity="0"/>
+
+  <!-- API spawns worker (conceptual) -->
+  <path class="arrow dash" d="M 760 235 L 570 235 L 570 265 L 570 265" />
+  <path class="arrow" d="M 570 300 L 620 340" opacity="0"/>
+
+  <!-- Worker reads/writes storage -->
+  <path class="arrow" d="M 570 310 L 620 340" />
+
+  <!-- YouTube optional -->
+  <path class="arrow dash" d="M 980 215 L 980 460" />
+  <text class="muted" x="905" y="350">optional</text>
+
+  <!-- Caption -->
+  <text class="muted" x="40" y="535">Solid arrows: normal flow. Dashed arrows: optional / conceptual.</text>
+</svg>
+
