@@ -126,16 +126,34 @@ class SQLiteAuthStore:
             conn.commit()
 
     def verify_login_code(self, email: str, code: str) -> bool:
+        """Verify a one-time login code and invalidate it on success.
+
+        Returns True only if the code matches and has not expired. In all
+        cases (success or failure due to expiry/mismatch), any matching
+        row for this email is deleted so the code cannot be reused.
+        """
+        email_l = email.lower()
         with self._conn() as conn:
-            row = conn.execute("SELECT code_hash, salt, expires_at FROM login_codes WHERE email = ?", (email.lower(),)).fetchone()
+            row = conn.execute(
+                "SELECT code_hash, salt, expires_at FROM login_codes WHERE email = ?",
+                (email_l,),
+            ).fetchone()
             if row is None:
                 return False
+
             expires_at = datetime.fromisoformat(str(row["expires_at"]))
-            if expires_at < datetime.now(timezone.utc):
-                return False
             salt = str(row["salt"])
             expected = str(row["code_hash"])
-            return hash_code(email, code, salt) == expected
+            is_valid = (
+                expires_at >= datetime.now(timezone.utc)
+                and hash_code(email, code, salt) == expected
+            )
+
+            # Invalidate the code regardless of whether it was valid,
+            # to ensure one-time use semantics.
+            conn.execute("DELETE FROM login_codes WHERE email = ?", (email_l,))
+            conn.commit()
+            return is_valid
 
     def create_oauth_state(self, state: str, user_id: str, ttl_seconds: int = 600) -> None:
         now = _now_iso()
