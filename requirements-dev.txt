@@ -1,0 +1,14 @@
+-r requirements-prod.txt
+
+# Notebooks / experiments (optional)
+ipykernel
+matplotlib
+librosa
+
+# If you hit platform-specific issues, consider pinning these to your platform.
+numba>=0.51.0,<0.63.0
+llvmlite
+numpy
+scipy
+
+
